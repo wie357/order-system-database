@@ -649,7 +649,7 @@
       <section>
         <div class="tabs">
           <button class="tab active" data-panel="checkout">結帳</button>
-          <button class="tab" data-panel="supplies">備品</button>
+          <button class="tab" data-panel="supplies">庫存</button>
           <button class="tab" data-panel="bookings">預約</button>
           <button class="tab" data-panel="database">資料庫</button>
         </div>
@@ -719,7 +719,7 @@
 
         <div id="supplies" class="panel">
           <div class="section-head">
-            <h2>餐點備品統計</h2>
+            <h2>備品/庫存需求統計</h2>
           </div>
           <div class="content">
             <div id="suppliesTable"></div>
@@ -883,6 +883,23 @@
       };
     }
 
+    function getSelectedMealItems() {
+      return state.items
+        .filter(item => item.qty > 0)
+        .map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          qty: item.qty,
+          supplies: item.supplies || {}
+        }));
+    }
+
+    function mealSummary(items) {
+      if (!items || !items.length) return "未登記餐點";
+      return items.map(item => `${item.name} x ${item.qty}`).join("、");
+    }
+
     function getBookingPeopleTarget() {
       return Number(document.getElementById("bookingPeople").value || 0);
     }
@@ -941,7 +958,8 @@
         mobile: booking.mobile || "",
         date: booking.date,
         time: booking.time,
-        people: Number(booking.people)
+        people: Number(booking.people),
+        items: booking.items || []
       }));
       state.orders = orders.map(order => ({
         id: order.id,
@@ -984,7 +1002,8 @@
             mobile: booking.mobile || "",
             date: booking.date,
             time: booking.time,
-            people: booking.people
+            people: booking.people,
+            items: booking.items || []
           }))
         });
       }
@@ -1004,7 +1023,8 @@
           mobile: booking.mobile || "",
           date: booking.date,
           time: booking.time,
-          people: booking.people
+          people: booking.people,
+          items: booking.items || []
         }
       });
       state.dbOnline = true;
@@ -1189,17 +1209,20 @@
 
     function renderSupplies() {
       const totals = {};
-      state.items.forEach(item => {
+      const bookingItems = state.bookings.flatMap(booking => booking.items || []);
+      const sourceItems = bookingItems.length ? bookingItems : state.items.filter(item => item.qty > 0);
+
+      sourceItems.forEach(item => {
         Object.entries(item.supplies || {}).forEach(([name, qty]) => {
-          totals[name] = (totals[name] || 0) + qty * item.qty;
+          totals[name] = (totals[name] || 0) + Number(qty || 0) * Number(item.qty || 0);
         });
       });
       const rows = Object.entries(totals)
         .filter(([, qty]) => qty > 0)
         .sort((a, b) => a[0].localeCompare(b[0], "zh-Hant"));
       document.getElementById("suppliesTable").innerHTML = rows.length
-        ? table(["備品", "需求數量"], rows)
-        : `<div class="empty">目前沒有備品需求</div>`;
+        ? table(["備品/庫存", "需求數量"], rows)
+        : `<div class="empty">目前沒有備品/庫存需求</div>`;
     }
 
     function renderCalendar() {
@@ -1215,10 +1238,14 @@
       const bookingsByDate = {};
 
       state.bookings.forEach(booking => {
-        bookingsByDate[booking.date] ||= { total: 0, times: {} };
+        bookingsByDate[booking.date] ||= { total: 0, times: {}, meals: {} };
         bookingsByDate[booking.date].total += booking.people;
         bookingsByDate[booking.date].times[booking.time] =
           (bookingsByDate[booking.date].times[booking.time] || 0) + booking.people;
+        (booking.items || []).forEach(item => {
+          bookingsByDate[booking.date].meals[item.name] =
+            (bookingsByDate[booking.date].meals[item.name] || 0) + Number(item.qty || 0);
+        });
       });
 
       document.getElementById("calendarTitle").textContent = monthTitle;
@@ -1234,6 +1261,13 @@
             .map(([time, people]) => `<span>${escapeHtml(time)} ${people}人</span>`)
             .join("")
           : "";
+        const mealRows = booking
+          ? Object.entries(booking.meals)
+            .filter(([, qty]) => qty > 0)
+            .slice(0, 2)
+            .map(([name, qty]) => `<span>${escapeHtml(name)} x ${qty}</span>`)
+            .join("")
+          : "";
         const moreCount = booking ? Math.max(0, Object.keys(booking.times).length - 3) : 0;
         const classes = [
           "calendar-day",
@@ -1245,7 +1279,7 @@
           <div class="${classes}">
             <span class="day-number">${date.getDate()}</span>
             ${booking ? `<span class="day-total">${booking.total} 人</span>` : ""}
-            ${timeRows ? `<div class="day-times">${timeRows}${moreCount ? `<span>另 ${moreCount} 個時段</span>` : ""}</div>` : ""}
+            ${timeRows || mealRows ? `<div class="day-times">${timeRows}${mealRows}${moreCount ? `<span>另 ${moreCount} 個時段</span>` : ""}</div>` : ""}
           </div>
         `;
       }).join("");
@@ -1285,13 +1319,14 @@
         : `<div class="empty">尚無每日預約資料</div>`;
 
       document.getElementById("bookingTable").innerHTML = state.bookings.length
-        ? table(["登記團體", "窗口", "手機", "日期", "時段", "人數", ""], state.bookings.map(booking => [
+        ? table(["登記團體", "窗口", "手機", "日期", "時段", "人數", "餐點", ""], state.bookings.map(booking => [
           booking.group || "",
           booking.contact || "",
           booking.mobile || "",
           booking.date,
           booking.time,
           `${booking.people} 人`,
+          mealSummary(booking.items),
           `<button type="button" class="danger" data-action="removeBooking" data-id="${booking.id}">刪除</button>`
         ]))
         : `<div class="empty">尚無預約明細</div>`;
@@ -1410,6 +1445,17 @@
 
     document.getElementById("bookingForm").addEventListener("submit", event => {
       event.preventDefault();
+      const bookingPeople = Number(document.getElementById("bookingPeople").value || 1);
+      const selectedMeals = getSelectedMealItems();
+      const selectedQty = selectedMeals.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+      if (!selectedMeals.length) {
+        alert("請先選擇這筆預約的餐點");
+        return;
+      }
+      if (selectedQty !== bookingPeople) {
+        alert(`預約人數需等於餐點份數。目前預約 ${bookingPeople} 人，餐點 ${selectedQty} 份。`);
+        return;
+      }
       const booking = {
         id: `booking-${Date.now()}`,
         group: document.getElementById("bookingGroup").value.trim(),
@@ -1417,12 +1463,14 @@
         mobile: document.getElementById("bookingMobile").value.trim(),
         date: document.getElementById("bookingDate").value,
         time: document.getElementById("bookingTime").value,
-        people: Number(document.getElementById("bookingPeople").value || 1)
+        people: bookingPeople,
+        items: selectedMeals
       };
       state.bookings.push(booking);
       document.getElementById("bookingGroup").value = "";
       document.getElementById("bookingContact").value = "";
       document.getElementById("bookingMobile").value = "";
+      state.items = state.items.map(item => ({ ...item, qty: 0 }));
       rerender();
       saveBookingToDatabase(booking).catch(error => updateDbStatus(error.message, "error"));
     });

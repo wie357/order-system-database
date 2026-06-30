@@ -16,6 +16,7 @@ create table if not exists public.bookings (
   date date not null,
   time text not null,
   people integer not null default 1,
+  items jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now()
 );
 
@@ -27,6 +28,9 @@ add column if not exists contact_name text;
 
 alter table public.bookings
 add column if not exists mobile text;
+
+alter table public.bookings
+add column if not exists items jsonb not null default '[]'::jsonb;
 
 create table if not exists public.orders (
   id text primary key,
