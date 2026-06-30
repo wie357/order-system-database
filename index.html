@@ -1,0 +1,1416 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>點餐與預約管理系統</title>
+  <style>
+    :root {
+      --bg: #f5f7f4;
+      --panel: #ffffff;
+      --ink: #1f2933;
+      --muted: #687582;
+      --line: #d9e0dc;
+      --green: #23624a;
+      --green-2: #e5f1eb;
+      --gold: #9a6b16;
+      --red: #b23a48;
+      --blue: #2f5f9f;
+      --shadow: 0 12px 30px rgba(31, 41, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+      background: var(--bg);
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      border-bottom: 1px solid var(--line);
+      background: rgba(245, 247, 244, 0.94);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 18px 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px 12px;
+      color: var(--ink);
+      background: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: #b8c6bf;
+      background: #f8faf9;
+    }
+
+    button.primary {
+      border-color: var(--green);
+      color: #fff;
+      background: var(--green);
+    }
+
+    button.danger {
+      color: var(--red);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(360px, 0.8fr);
+      gap: 18px;
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    section {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .content {
+      padding: 18px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .menu-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .field-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: end;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid rgba(35, 98, 74, 0.16);
+      border-color: var(--green);
+    }
+
+    .item {
+      display: grid;
+      gap: 12px;
+      min-height: 164px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .item-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .item h3 {
+      margin: 0 0 4px;
+      font-size: 16px;
+    }
+
+    .price {
+      color: var(--green);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .stock {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .qty-row {
+      display: grid;
+      grid-template-columns: 38px minmax(48px, 1fr) 38px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .qty-row button {
+      width: 38px;
+      padding: 0;
+      font-size: 18px;
+    }
+
+    .qty-row input {
+      text-align: center;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      background: #fafcfb;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 22px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      background: #fbfcfb;
+    }
+
+    td:last-child,
+    th:last-child {
+      text-align: right;
+    }
+
+    .empty {
+      padding: 18px;
+      color: var(--muted);
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #fbfcfb;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      width: fit-content;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--muted);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .status-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #9aa5ad;
+    }
+
+    .status-pill.online::before {
+      background: var(--green);
+    }
+
+    .status-pill.error::before {
+      background: var(--red);
+    }
+
+    .actions-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr) 54px;
+      gap: 10px;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .bar {
+      overflow: hidden;
+      height: 10px;
+      border-radius: 999px;
+      background: #e8eeeb;
+    }
+
+    .bar div {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--blue);
+    }
+
+    .calendar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .calendar-head strong {
+      font-size: 18px;
+      text-align: center;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 6px;
+    }
+
+    .calendar-week,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+
+    .calendar-week {
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .calendar-grid {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--line);
+      gap: 1px;
+    }
+
+    .calendar-day {
+      display: grid;
+      align-content: start;
+      gap: 5px;
+      min-height: 96px;
+      padding: 8px;
+      background: #fff;
+    }
+
+    .calendar-day.outside {
+      color: #9aa5ad;
+      background: #f4f6f5;
+    }
+
+    .calendar-day.today {
+      outline: 2px solid rgba(35, 98, 74, 0.26);
+      outline-offset: -2px;
+    }
+
+    .day-number {
+      font-weight: 700;
+    }
+
+    .day-total {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 3px 7px;
+      color: var(--green);
+      background: var(--green-2);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .day-times {
+      display: grid;
+      gap: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfb;
+    }
+
+    .tab {
+      flex: 1;
+      border: 0;
+      border-right: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .tab.active {
+      color: var(--green);
+      background: var(--green-2);
+      font-weight: 700;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .print-title {
+      display: none;
+    }
+
+    @media (max-width: 1080px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+      }
+
+      main {
+        padding: 14px;
+      }
+
+      .menu-grid,
+      .field-grid,
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-row {
+        grid-template-columns: 74px minmax(0, 1fr) 42px;
+      }
+
+      .calendar-day {
+        min-height: 78px;
+        padding: 6px;
+      }
+
+      .day-times {
+        font-size: 11px;
+      }
+    }
+
+    @media print {
+      header,
+      .tabs,
+      button,
+      .field-grid,
+      .menu-grid {
+        display: none !important;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      main {
+        display: block;
+        padding: 0;
+      }
+
+      section {
+        box-shadow: none;
+        border-radius: 0;
+        margin-bottom: 16px;
+        break-inside: avoid;
+      }
+
+      .panel,
+      .print-title {
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <h1>點餐與預約管理系統</h1>
+      <div class="toolbar">
+        <button id="printBtn" title="列印報表">列印</button>
+        <button id="resetBtn" class="danger" title="清除目前資料">清除資料</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="stack">
+      <section>
+        <div class="section-head">
+          <div>
+            <h2>點餐品項</h2>
+            <div class="hint">調整份數後會自動計算金額與備品需求</div>
+          </div>
+        </div>
+        <div class="content">
+          <div id="menuGrid" class="grid menu-grid"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <div>
+            <h2>新增自訂品項</h2>
+            <div class="hint">可加入臨時餐點、套餐或飲品</div>
+          </div>
+        </div>
+        <div class="content">
+          <form id="itemForm" class="grid field-grid">
+            <label>品項
+              <input id="newName" required placeholder="例：今日特餐">
+            </label>
+            <label>單點金額
+              <input id="newPrice" required type="number" min="0" step="1" placeholder="120">
+            </label>
+            <label>備品
+              <input id="newSupplies" placeholder="餐盒:1, 筷子:1">
+            </label>
+            <button class="primary" type="submit">新增</button>
+          </form>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <div>
+            <h2>預約登記</h2>
+            <div class="hint">統計每日預約安排人數與各時段人數</div>
+          </div>
+        </div>
+        <div class="content">
+          <form id="bookingForm" class="grid field-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+            <label>登記團體
+              <input id="bookingGroup" placeholder="例：幸福旅行社">
+            </label>
+            <label>窗口
+              <input id="bookingContact" placeholder="例：林小姐">
+            </label>
+            <label>手機
+              <input id="bookingMobile" placeholder="例：0912-345-678">
+            </label>
+            <label>日期
+              <input id="bookingDate" required type="date">
+            </label>
+            <label>預約時段
+              <select id="bookingTime" required>
+                <option>11:00-12:00</option>
+                <option>12:00-13:00</option>
+                <option>13:00-14:00</option>
+                <option>17:00-18:00</option>
+                <option>18:00-19:00</option>
+                <option>19:00-20:00</option>
+              </select>
+            </label>
+            <label>人數
+              <input id="bookingPeople" required type="number" min="1" step="1" value="2">
+            </label>
+            <button class="primary" type="submit">加入預約</button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <aside class="stack">
+      <section>
+        <div class="tabs">
+          <button class="tab active" data-panel="checkout">結帳</button>
+          <button class="tab" data-panel="supplies">備品</button>
+          <button class="tab" data-panel="bookings">預約</button>
+          <button class="tab" data-panel="database">資料庫</button>
+        </div>
+
+        <div id="checkout" class="panel active">
+          <div class="section-head">
+            <h2>金額統計</h2>
+          </div>
+          <div class="content stack">
+            <div class="summary-grid">
+              <div class="metric">
+                <span>餐點小計</span>
+                <strong id="subtotal">$0</strong>
+              </div>
+              <div class="metric">
+                <span>優惠扣除金額</span>
+                <strong id="discountAmount">$0</strong>
+              </div>
+              <div class="metric">
+                <span>總份數</span>
+                <strong id="totalQty">0</strong>
+              </div>
+              <div class="metric">
+                <span>總金額</span>
+                <strong id="grandTotal">$0</strong>
+              </div>
+            </div>
+
+            <div class="grid field-grid" style="grid-template-columns: 1fr 1fr;">
+              <label>優惠折扣
+                <select id="discountType">
+                  <option value="none">無優惠</option>
+                  <option value="percent">百分比折扣</option>
+                  <option value="amount">固定扣除金額</option>
+                </select>
+              </label>
+              <label>折扣值
+                <input id="discountValue" type="number" min="0" step="1" value="0">
+              </label>
+            </div>
+
+            <div class="grid field-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+              <label>顧客姓名
+                <input id="customerName" placeholder="例：王小姐">
+              </label>
+              <label>聯絡電話
+                <input id="customerPhone" placeholder="例：0912-345-678">
+              </label>
+              <button id="submitOrderBtn" class="primary" type="button">送出訂單</button>
+            </div>
+
+            <div>
+              <h3 class="print-title">點餐明細</h3>
+              <div id="orderTable"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="supplies" class="panel">
+          <div class="section-head">
+            <h2>餐點備品統計</h2>
+          </div>
+          <div class="content">
+            <div id="suppliesTable"></div>
+          </div>
+        </div>
+
+        <div id="bookings" class="panel">
+          <div class="section-head">
+            <h2>預約安排統計</h2>
+          </div>
+          <div class="content stack">
+            <div>
+              <div class="calendar-head">
+                <div class="calendar-nav">
+                  <button type="button" data-action="prevMonth" title="上一月">‹</button>
+                  <button type="button" data-action="currentMonth" title="回到本月">本月</button>
+                </div>
+                <strong id="calendarTitle"></strong>
+                <div class="calendar-nav">
+                  <button type="button" data-action="nextMonth" title="下一月">›</button>
+                </div>
+              </div>
+              <div class="calendar-week">
+                <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+              </div>
+              <div id="calendarGrid" class="calendar-grid"></div>
+            </div>
+            <div class="summary-grid">
+              <div class="metric">
+                <span>今日預約人數</span>
+                <strong id="todayPeople">0</strong>
+              </div>
+              <div class="metric">
+                <span>全部預約人數</span>
+                <strong id="allPeople">0</strong>
+              </div>
+            </div>
+            <div>
+              <h3 style="font-size: 15px;">各時段預約人數</h3>
+              <div id="timeBars" class="bar-list"></div>
+            </div>
+            <div>
+              <h3 style="font-size: 15px;">每日預約安排人數</h3>
+              <div id="dailyBookingTable"></div>
+            </div>
+            <div>
+              <h3 style="font-size: 15px;">預約明細</h3>
+              <div id="bookingTable"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="database" class="panel">
+          <div class="section-head">
+            <div>
+              <h2>後台資料庫</h2>
+              <div class="hint">填入 Supabase 資料後，訂單、預約與品項可跨裝置同步</div>
+            </div>
+            <span id="dbStatus" class="status-pill">本機模式</span>
+          </div>
+          <div class="content stack">
+            <div class="grid field-grid" style="grid-template-columns: 1fr 1fr;">
+              <label>Supabase Project URL
+                <input id="dbUrl" placeholder="https://xxxx.supabase.co">
+              </label>
+              <label>Supabase anon public key
+                <input id="dbAnonKey" placeholder="eyJhbGciOi...">
+              </label>
+            </div>
+            <div class="actions-row">
+              <button id="saveDbBtn" class="primary" type="button">儲存資料庫設定</button>
+              <button id="syncFromDbBtn" type="button">從資料庫載入</button>
+              <button id="syncToDbBtn" type="button">同步目前資料</button>
+            </div>
+            <div>
+              <h3 style="font-size: 15px;">雲端訂單</h3>
+              <div id="cloudOrdersTable"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const today = formatDate(new Date());
+    const defaultItems = [
+      { id: "meal-1", name: "招牌雞腿飯", price: 135, qty: 0, supplies: { "餐盒": 1, "筷子": 1, "紙巾": 1 } },
+      { id: "meal-2", name: "滷排骨飯", price: 125, qty: 0, supplies: { "餐盒": 1, "筷子": 1, "紙巾": 1 } },
+      { id: "meal-3", name: "蔬食便當", price: 115, qty: 0, supplies: { "餐盒": 1, "筷子": 1, "紙巾": 1 } },
+      { id: "meal-4", name: "牛肉湯麵", price: 150, qty: 0, supplies: { "湯碗": 1, "湯匙": 1, "筷子": 1 } },
+      { id: "meal-5", name: "鮮蝦水餃", price: 90, qty: 0, supplies: { "餐盒": 1, "醬料包": 1, "筷子": 1 } },
+      { id: "meal-6", name: "紅茶", price: 35, qty: 0, supplies: { "杯子": 1, "吸管": 1 } }
+    ];
+
+    const state = {
+      items: load("orderSystemItems", defaultItems),
+      bookings: load("orderSystemBookings", []),
+      orders: load("orderSystemOrders", []),
+      discountType: localStorage.getItem("orderSystemDiscountType") || "none",
+      discountValue: Number(localStorage.getItem("orderSystemDiscountValue") || 0),
+      calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+      dbUrl: localStorage.getItem("orderSystemDbUrl") || "",
+      dbAnonKey: localStorage.getItem("orderSystemDbAnonKey") || "",
+      dbOnline: false
+    };
+
+    const currency = new Intl.NumberFormat("zh-TW", {
+      style: "currency",
+      currency: "TWD",
+      maximumFractionDigits: 0
+    });
+
+    document.getElementById("bookingDate").value = today;
+    document.getElementById("discountType").value = state.discountType;
+    document.getElementById("discountValue").value = state.discountValue;
+    document.getElementById("dbUrl").value = state.dbUrl;
+    document.getElementById("dbAnonKey").value = state.dbAnonKey;
+
+    function load(key, fallback) {
+      try {
+        return JSON.parse(localStorage.getItem(key)) || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function save() {
+      localStorage.setItem("orderSystemItems", JSON.stringify(state.items));
+      localStorage.setItem("orderSystemBookings", JSON.stringify(state.bookings));
+      localStorage.setItem("orderSystemOrders", JSON.stringify(state.orders));
+      localStorage.setItem("orderSystemDiscountType", state.discountType);
+      localStorage.setItem("orderSystemDiscountValue", state.discountValue);
+      localStorage.setItem("orderSystemDbUrl", state.dbUrl);
+      localStorage.setItem("orderSystemDbAnonKey", state.dbAnonKey);
+    }
+
+    function getOrderTotals() {
+      const ordered = state.items.filter(item => item.qty > 0);
+      const subtotal = ordered.reduce((sum, item) => sum + item.price * item.qty, 0);
+      const totalQty = ordered.reduce((sum, item) => sum + item.qty, 0);
+      const rawDiscount = state.discountType === "percent"
+        ? subtotal * (state.discountValue / 100)
+        : state.discountType === "amount"
+          ? state.discountValue
+          : 0;
+      const discount = Math.min(subtotal, Math.max(0, Math.round(rawDiscount)));
+      return {
+        ordered,
+        subtotal,
+        totalQty,
+        discount,
+        grandTotal: subtotal - discount
+      };
+    }
+
+    function updateDbStatus(message, mode = "offline") {
+      const status = document.getElementById("dbStatus");
+      status.textContent = message;
+      status.classList.toggle("online", mode === "online");
+      status.classList.toggle("error", mode === "error");
+    }
+
+    function hasDbConfig() {
+      return state.dbUrl.trim() && state.dbAnonKey.trim();
+    }
+
+    async function supabaseRequest(tableName, options = {}) {
+      if (!hasDbConfig()) throw new Error("尚未設定資料庫");
+      const path = options.query ? `${tableName}?${options.query}` : tableName;
+      const response = await fetch(`${state.dbUrl.replace(/\/$/, "")}/rest/v1/${path}`, {
+        method: options.method || "GET",
+        headers: {
+          "apikey": state.dbAnonKey,
+          "authorization": `Bearer ${state.dbAnonKey}`,
+          "content-type": "application/json",
+          "prefer": options.prefer || "return=representation",
+          ...(options.headers || {})
+        },
+        body: options.body ? JSON.stringify(options.body) : undefined
+      });
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(detail || `資料庫回應 ${response.status}`);
+      }
+      if (response.status === 204) return [];
+      return response.json();
+    }
+
+    async function syncFromDatabase() {
+      updateDbStatus("同步中...");
+      const [items, bookings, orders] = await Promise.all([
+        supabaseRequest("menu_items", { query: "active=eq.true&order=sort_order.asc" }),
+        supabaseRequest("bookings", { query: "order=date.asc,time.asc" }),
+        supabaseRequest("orders", { query: "order=created_at.desc&limit=30" })
+      ]);
+      state.items = items.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: Number(item.price),
+        qty: 0,
+        supplies: item.supplies || {}
+      }));
+      state.bookings = bookings.map(booking => ({
+        id: booking.id,
+        group: booking.group_name || "",
+        contact: booking.contact_name || "",
+        mobile: booking.mobile || "",
+        date: booking.date,
+        time: booking.time,
+        people: Number(booking.people)
+      }));
+      state.orders = orders.map(order => ({
+        id: order.id,
+        customerName: order.customer_name || "",
+        customerPhone: order.customer_phone || "",
+        totalQty: Number(order.total_qty || 0),
+        grandTotal: Number(order.grand_total || 0),
+        createdAt: order.created_at,
+        status: order.status || "new"
+      }));
+      state.dbOnline = true;
+      updateDbStatus("資料庫已連線", "online");
+      rerender();
+    }
+
+    async function syncToDatabase() {
+      updateDbStatus("同步中...");
+      await supabaseRequest("menu_items", {
+        method: "POST",
+        query: "on_conflict=id",
+        prefer: "resolution=merge-duplicates,return=representation",
+        body: state.items.map((item, index) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          supplies: item.supplies || {},
+          sort_order: index,
+          active: true
+        }))
+      });
+      if (state.bookings.length) {
+        await supabaseRequest("bookings", {
+          method: "POST",
+          query: "on_conflict=id",
+          prefer: "resolution=merge-duplicates,return=representation",
+          body: state.bookings.map(booking => ({
+            id: booking.id,
+            group_name: booking.group || "",
+            contact_name: booking.contact || "",
+            mobile: booking.mobile || "",
+            date: booking.date,
+            time: booking.time,
+            people: booking.people
+          }))
+        });
+      }
+      state.dbOnline = true;
+      updateDbStatus("已同步到資料庫", "online");
+      rerender();
+    }
+
+    async function saveBookingToDatabase(booking) {
+      if (!hasDbConfig()) return;
+      await supabaseRequest("bookings", {
+        method: "POST",
+        body: {
+          id: booking.id,
+          group_name: booking.group || "",
+          contact_name: booking.contact || "",
+          mobile: booking.mobile || "",
+          date: booking.date,
+          time: booking.time,
+          people: booking.people
+        }
+      });
+      state.dbOnline = true;
+      updateDbStatus("預約已存入資料庫", "online");
+    }
+
+    async function saveItemToDatabase(item, index) {
+      if (!hasDbConfig()) return;
+      await supabaseRequest("menu_items", {
+        method: "POST",
+        query: "on_conflict=id",
+        prefer: "resolution=merge-duplicates,return=representation",
+        body: {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          supplies: item.supplies || {},
+          sort_order: index,
+          active: true
+        }
+      });
+      state.dbOnline = true;
+      updateDbStatus("品項已存入資料庫", "online");
+    }
+
+    async function deleteFromDatabase(tableName, id) {
+      if (!hasDbConfig()) return;
+      await supabaseRequest(tableName, {
+        method: "DELETE",
+        query: `id=eq.${encodeURIComponent(id)}`,
+        prefer: "return=minimal"
+      });
+      state.dbOnline = true;
+      updateDbStatus("資料庫已更新", "online");
+    }
+
+    async function submitOrder() {
+      const totals = getOrderTotals();
+      if (!totals.ordered.length) {
+        alert("請先選擇餐點");
+        return;
+      }
+      const order = {
+        id: `order-${Date.now()}`,
+        customerName: document.getElementById("customerName").value.trim(),
+        customerPhone: document.getElementById("customerPhone").value.trim(),
+        subtotal: totals.subtotal,
+        discountType: state.discountType,
+        discountValue: state.discountValue,
+        discountAmount: totals.discount,
+        totalQty: totals.totalQty,
+        grandTotal: totals.grandTotal,
+        items: totals.ordered.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          qty: item.qty,
+          subtotal: item.price * item.qty
+        })),
+        createdAt: new Date().toISOString(),
+        status: "new"
+      };
+      if (hasDbConfig()) {
+        await supabaseRequest("orders", {
+          method: "POST",
+          body: {
+            id: order.id,
+            customer_name: order.customerName,
+            customer_phone: order.customerPhone,
+            subtotal: order.subtotal,
+            discount_type: order.discountType,
+            discount_value: order.discountValue,
+            discount_amount: order.discountAmount,
+            total_qty: order.totalQty,
+            grand_total: order.grandTotal,
+            items: order.items,
+            status: order.status
+          }
+        });
+        updateDbStatus("訂單已存入資料庫", "online");
+      }
+      state.orders.unshift(order);
+      state.items = state.items.map(item => ({ ...item, qty: 0 }));
+      document.getElementById("customerName").value = "";
+      document.getElementById("customerPhone").value = "";
+      rerender();
+      alert("訂單已送出");
+    }
+
+    function parseSupplies(text) {
+      const supplies = {};
+      text.split(",").map(part => part.trim()).filter(Boolean).forEach(part => {
+        const [name, rawQty] = part.split(":").map(value => value.trim());
+        if (name) supplies[name] = Number(rawQty || 1);
+      });
+      return supplies;
+    }
+
+    function renderMenu() {
+      const grid = document.getElementById("menuGrid");
+      grid.innerHTML = state.items.map(item => {
+        const supplies = Object.entries(item.supplies || {})
+          .map(([name, qty]) => `${name} x ${qty}`)
+          .join("、") || "未設定";
+        return `
+          <article class="item">
+            <div class="item-top">
+              <div>
+                <h3>${escapeHtml(item.name)}</h3>
+                <div class="stock">${escapeHtml(supplies)}</div>
+              </div>
+              <div class="price">${currency.format(item.price)}</div>
+            </div>
+            <div class="qty-row">
+              <button type="button" aria-label="減少 ${escapeHtml(item.name)}" data-action="minus" data-id="${item.id}">-</button>
+              <input type="number" min="0" step="1" value="${item.qty}" data-action="qty" data-id="${item.id}" aria-label="${escapeHtml(item.name)} 份數">
+              <button type="button" aria-label="增加 ${escapeHtml(item.name)}" data-action="plus" data-id="${item.id}">+</button>
+            </div>
+            <button type="button" class="danger" data-action="removeItem" data-id="${item.id}">刪除品項</button>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderSummary() {
+      const { ordered, subtotal, totalQty, discount, grandTotal } = getOrderTotals();
+
+      document.getElementById("subtotal").textContent = currency.format(subtotal);
+      document.getElementById("discountAmount").textContent = currency.format(discount);
+      document.getElementById("totalQty").textContent = totalQty;
+      document.getElementById("grandTotal").textContent = currency.format(grandTotal);
+
+      document.getElementById("orderTable").innerHTML = ordered.length
+        ? table(["品項", "單價", "份數", "小計"], ordered.map(item => [
+          item.name,
+          currency.format(item.price),
+          item.qty,
+          currency.format(item.price * item.qty)
+        ]))
+        : `<div class="empty">尚未選擇餐點</div>`;
+    }
+
+    function renderOrders() {
+      const orders = state.orders.slice(0, 30);
+      document.getElementById("cloudOrdersTable").innerHTML = orders.length
+        ? table(["時間", "顧客", "份數", "總金額", "狀態"], orders.map(order => [
+          order.createdAt ? new Date(order.createdAt).toLocaleString("zh-TW") : "",
+          order.customerName || "未填",
+          order.totalQty,
+          currency.format(order.grandTotal),
+          order.status === "new" ? "新訂單" : order.status
+        ]))
+        : `<div class="empty">尚無雲端訂單</div>`;
+    }
+
+    function renderSupplies() {
+      const totals = {};
+      state.items.forEach(item => {
+        Object.entries(item.supplies || {}).forEach(([name, qty]) => {
+          totals[name] = (totals[name] || 0) + qty * item.qty;
+        });
+      });
+      const rows = Object.entries(totals)
+        .filter(([, qty]) => qty > 0)
+        .sort((a, b) => a[0].localeCompare(b[0], "zh-Hant"));
+      document.getElementById("suppliesTable").innerHTML = rows.length
+        ? table(["備品", "需求數量"], rows)
+        : `<div class="empty">目前沒有備品需求</div>`;
+    }
+
+    function renderCalendar() {
+      const monthDate = state.calendarMonth;
+      const year = monthDate.getFullYear();
+      const month = monthDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const startDate = new Date(year, month, 1 - firstDay.getDay());
+      const monthTitle = new Intl.DateTimeFormat("zh-TW", {
+        year: "numeric",
+        month: "long"
+      }).format(monthDate);
+      const bookingsByDate = {};
+
+      state.bookings.forEach(booking => {
+        bookingsByDate[booking.date] ||= { total: 0, times: {} };
+        bookingsByDate[booking.date].total += booking.people;
+        bookingsByDate[booking.date].times[booking.time] =
+          (bookingsByDate[booking.date].times[booking.time] || 0) + booking.people;
+      });
+
+      document.getElementById("calendarTitle").textContent = monthTitle;
+      document.getElementById("calendarGrid").innerHTML = Array.from({ length: 42 }, (_, index) => {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + index);
+        const dateKey = formatDate(date);
+        const booking = bookingsByDate[dateKey];
+        const timeRows = booking
+          ? Object.entries(booking.times)
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .slice(0, 3)
+            .map(([time, people]) => `<span>${escapeHtml(time)} ${people}人</span>`)
+            .join("")
+          : "";
+        const moreCount = booking ? Math.max(0, Object.keys(booking.times).length - 3) : 0;
+        const classes = [
+          "calendar-day",
+          date.getMonth() === month ? "" : "outside",
+          dateKey === today ? "today" : ""
+        ].filter(Boolean).join(" ");
+
+        return `
+          <div class="${classes}">
+            <span class="day-number">${date.getDate()}</span>
+            ${booking ? `<span class="day-total">${booking.total} 人</span>` : ""}
+            ${timeRows ? `<div class="day-times">${timeRows}${moreCount ? `<span>另 ${moreCount} 個時段</span>` : ""}</div>` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderBookings() {
+      const daily = {};
+      const byTime = {};
+      let allPeople = 0;
+      let todayPeople = 0;
+
+      state.bookings.forEach(booking => {
+        daily[booking.date] = (daily[booking.date] || 0) + booking.people;
+        byTime[booking.time] = (byTime[booking.time] || 0) + booking.people;
+        allPeople += booking.people;
+        if (booking.date === today) todayPeople += booking.people;
+      });
+
+      document.getElementById("todayPeople").textContent = todayPeople;
+      document.getElementById("allPeople").textContent = allPeople;
+
+      const maxTime = Math.max(1, ...Object.values(byTime));
+      const timeRows = Object.entries(byTime).sort((a, b) => a[0].localeCompare(b[0]));
+      document.getElementById("timeBars").innerHTML = timeRows.length
+        ? timeRows.map(([time, people]) => `
+          <div class="bar-row">
+            <span>${escapeHtml(time)}</span>
+            <div class="bar"><div style="width: ${(people / maxTime) * 100}%"></div></div>
+            <strong>${people} 人</strong>
+          </div>
+        `).join("")
+        : `<div class="empty">尚無預約時段</div>`;
+
+      const dailyRows = Object.entries(daily).sort((a, b) => a[0].localeCompare(b[0]));
+      document.getElementById("dailyBookingTable").innerHTML = dailyRows.length
+        ? table(["日期", "安排人數"], dailyRows.map(([date, people]) => [date, `${people} 人`]))
+        : `<div class="empty">尚無每日預約資料</div>`;
+
+      document.getElementById("bookingTable").innerHTML = state.bookings.length
+        ? table(["登記團體", "窗口", "手機", "日期", "時段", "人數", ""], state.bookings.map(booking => [
+          booking.group || "",
+          booking.contact || "",
+          booking.mobile || "",
+          booking.date,
+          booking.time,
+          `${booking.people} 人`,
+          `<button type="button" class="danger" data-action="removeBooking" data-id="${booking.id}">刪除</button>`
+        ]))
+        : `<div class="empty">尚無預約明細</div>`;
+
+      renderCalendar();
+    }
+
+    function table(headers, rows) {
+      return `
+        <table>
+          <thead><tr>${headers.map(header => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
+          <tbody>
+            ${rows.map(row => `<tr>${row.map(cell => `<td>${String(cell).startsWith("<button") ? cell : escapeHtml(String(cell))}</td>`).join("")}</tr>`).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function rerender() {
+      save();
+      renderMenu();
+      renderSummary();
+      renderSupplies();
+      renderBookings();
+      renderOrders();
+    }
+
+    document.addEventListener("click", async event => {
+      const target = event.target.closest("button");
+      if (!target) return;
+
+      if (target.matches(".tab")) {
+        document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+        document.querySelectorAll(".panel").forEach(panel => panel.classList.remove("active"));
+        target.classList.add("active");
+        document.getElementById(target.dataset.panel).classList.add("active");
+        return;
+      }
+
+      if (target.dataset.action === "prevMonth") {
+        state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() - 1, 1);
+        renderBookings();
+        return;
+      }
+
+      if (target.dataset.action === "nextMonth") {
+        state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() + 1, 1);
+        renderBookings();
+        return;
+      }
+
+      if (target.dataset.action === "currentMonth") {
+        state.calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        renderBookings();
+        return;
+      }
+
+      const item = state.items.find(menuItem => menuItem.id === target.dataset.id);
+      if (target.dataset.action === "plus" && item) item.qty += 1;
+      if (target.dataset.action === "minus" && item) item.qty = Math.max(0, item.qty - 1);
+      if (target.dataset.action === "removeItem") {
+        state.items = state.items.filter(menuItem => menuItem.id !== target.dataset.id);
+        deleteFromDatabase("menu_items", target.dataset.id).catch(error => updateDbStatus(error.message, "error"));
+      }
+      if (target.dataset.action === "removeBooking") {
+        state.bookings = state.bookings.filter(booking => booking.id !== target.dataset.id);
+        deleteFromDatabase("bookings", target.dataset.id).catch(error => updateDbStatus(error.message, "error"));
+      }
+      rerender();
+    });
+
+    document.addEventListener("input", event => {
+      if (event.target.dataset.action === "qty") {
+        const item = state.items.find(menuItem => menuItem.id === event.target.dataset.id);
+        if (item) item.qty = Math.max(0, Number(event.target.value || 0));
+        rerender();
+      }
+    });
+
+    document.getElementById("discountType").addEventListener("change", event => {
+      state.discountType = event.target.value;
+      rerender();
+    });
+
+    document.getElementById("discountValue").addEventListener("input", event => {
+      state.discountValue = Math.max(0, Number(event.target.value || 0));
+      rerender();
+    });
+
+    document.getElementById("itemForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const item = {
+        id: `meal-${Date.now()}`,
+        name: document.getElementById("newName").value.trim(),
+        price: Number(document.getElementById("newPrice").value || 0),
+        qty: 0,
+        supplies: parseSupplies(document.getElementById("newSupplies").value)
+      };
+      state.items.push(item);
+      event.target.reset();
+      rerender();
+      saveItemToDatabase(item, state.items.length - 1).catch(error => updateDbStatus(error.message, "error"));
+    });
+
+    document.getElementById("bookingForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const booking = {
+        id: `booking-${Date.now()}`,
+        group: document.getElementById("bookingGroup").value.trim(),
+        contact: document.getElementById("bookingContact").value.trim(),
+        mobile: document.getElementById("bookingMobile").value.trim(),
+        date: document.getElementById("bookingDate").value,
+        time: document.getElementById("bookingTime").value,
+        people: Number(document.getElementById("bookingPeople").value || 1)
+      };
+      state.bookings.push(booking);
+      document.getElementById("bookingGroup").value = "";
+      document.getElementById("bookingContact").value = "";
+      document.getElementById("bookingMobile").value = "";
+      rerender();
+      saveBookingToDatabase(booking).catch(error => updateDbStatus(error.message, "error"));
+    });
+
+    document.getElementById("saveDbBtn").addEventListener("click", () => {
+      state.dbUrl = document.getElementById("dbUrl").value.trim();
+      state.dbAnonKey = document.getElementById("dbAnonKey").value.trim();
+      save();
+      updateDbStatus(hasDbConfig() ? "資料庫設定已儲存" : "本機模式", hasDbConfig() ? "online" : "offline");
+    });
+
+    document.getElementById("syncFromDbBtn").addEventListener("click", () => {
+      syncFromDatabase().catch(error => updateDbStatus(error.message, "error"));
+    });
+
+    document.getElementById("syncToDbBtn").addEventListener("click", () => {
+      syncToDatabase().catch(error => updateDbStatus(error.message, "error"));
+    });
+
+    document.getElementById("submitOrderBtn").addEventListener("click", () => {
+      submitOrder().catch(error => {
+        updateDbStatus(error.message, "error");
+        alert(`訂單送出失敗：${error.message}`);
+      });
+    });
+
+    document.getElementById("printBtn").addEventListener("click", () => window.print());
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (!confirm("確定要清除目前點餐、品項、折扣與預約資料？")) return;
+      localStorage.removeItem("orderSystemItems");
+      localStorage.removeItem("orderSystemBookings");
+      localStorage.removeItem("orderSystemOrders");
+      localStorage.removeItem("orderSystemDiscountType");
+      localStorage.removeItem("orderSystemDiscountValue");
+      state.items = structuredClone(defaultItems);
+      state.bookings = [];
+      state.orders = [];
+      state.discountType = "none";
+      state.discountValue = 0;
+      document.getElementById("discountType").value = "none";
+      document.getElementById("discountValue").value = 0;
+      rerender();
+    });
+
+    updateDbStatus(hasDbConfig() ? "可連線資料庫" : "本機模式", hasDbConfig() ? "online" : "offline");
+    rerender();
+  </script>
+</body>
+</html>
