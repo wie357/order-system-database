@@ -321,6 +321,22 @@
       flex-wrap: wrap;
     }
 
+    .notice {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--muted);
+      background: #fbfcfb;
+      font-size: 14px;
+    }
+
+    .notice.warning {
+      border-color: rgba(178, 58, 72, 0.28);
+      color: var(--red);
+      background: #fff4f5;
+      font-weight: 700;
+    }
+
     .stack {
       display: grid;
       gap: 18px;
@@ -660,7 +676,16 @@
                 <span>總金額</span>
                 <strong id="grandTotal">$0</strong>
               </div>
+              <div class="metric">
+                <span>預約人數</span>
+                <strong id="bookingPeopleSummary">0</strong>
+              </div>
+              <div class="metric">
+                <span>份數差額</span>
+                <strong id="qtyDifference">0</strong>
+              </div>
             </div>
+            <div id="qtyMatchHint" class="notice">總份數會和預約人數比對。</div>
 
             <div class="grid field-grid" style="grid-template-columns: 1fr 1fr;">
               <label>優惠折扣
@@ -858,6 +883,10 @@
       };
     }
 
+    function getBookingPeopleTarget() {
+      return Number(document.getElementById("bookingPeople").value || 0);
+    }
+
     function updateDbStatus(message, mode = "offline") {
       const status = document.getElementById("dbStatus");
       status.textContent = message;
@@ -1014,8 +1043,17 @@
 
     async function submitOrder() {
       const totals = getOrderTotals();
+      const bookingPeople = getBookingPeopleTarget();
       if (!totals.ordered.length) {
         alert("請先選擇餐點");
+        return;
+      }
+      if (!bookingPeople) {
+        alert("請先輸入預約人數");
+        return;
+      }
+      if (totals.totalQty !== bookingPeople) {
+        alert(`餐點總份數需等於預約人數。目前總份數 ${totals.totalQty} 份，預約人數 ${bookingPeople} 人。`);
         return;
       }
       const order = {
@@ -1102,11 +1140,29 @@
 
     function renderSummary() {
       const { ordered, subtotal, totalQty, discount, grandTotal } = getOrderTotals();
+      const bookingPeople = getBookingPeopleTarget();
+      const difference = totalQty - bookingPeople;
 
       document.getElementById("subtotal").textContent = currency.format(subtotal);
       document.getElementById("discountAmount").textContent = currency.format(discount);
       document.getElementById("totalQty").textContent = totalQty;
       document.getElementById("grandTotal").textContent = currency.format(grandTotal);
+      document.getElementById("bookingPeopleSummary").textContent = bookingPeople;
+      document.getElementById("qtyDifference").textContent = difference;
+
+      const hint = document.getElementById("qtyMatchHint");
+      if (!bookingPeople) {
+        hint.textContent = "請先輸入預約人數，再確認餐點總份數。";
+        hint.classList.add("warning");
+      } else if (difference === 0) {
+        hint.textContent = "餐點總份數已等於預約人數。";
+        hint.classList.remove("warning");
+      } else {
+        hint.textContent = difference > 0
+          ? `餐點總份數比預約人數多 ${difference} 份。`
+          : `餐點總份數比預約人數少 ${Math.abs(difference)} 份。`;
+        hint.classList.add("warning");
+      }
 
       document.getElementById("orderTable").innerHTML = ordered.length
         ? table(["品項", "單價", "份數", "小計"], ordered.map(item => [
@@ -1321,6 +1377,9 @@
         const item = state.items.find(menuItem => menuItem.id === event.target.dataset.id);
         if (item) item.qty = Math.max(0, Number(event.target.value || 0));
         rerender();
+      }
+      if (event.target.id === "bookingPeople") {
+        renderSummary();
       }
     });
 
